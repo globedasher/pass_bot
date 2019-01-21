@@ -1,4 +1,4 @@
-import sys, os, logging, json
+import sys, os, logging, json, requests
 import urllib.request
 from twitter import *
 
@@ -40,13 +40,17 @@ def all_passes():
 
 def one_from_all_passes(pass_id):
     #Get information all passes
-    all_passes_url = "https://wsdot.com/Traffic/api/MountainPassConditions/MountainPassConditionsREST.svc/GetMountainPassConditionsAsJson?AccessCode={%s}" % (key.wa_access_code)
     logging.info("One from all passes request")
+    all_passes_url = "https://wsdot.com/Traffic/api/MountainPassConditions/MountainPassConditionsREST.svc/GetMountainPassConditionsAsJson?AccessCode={%s}" % (key.wa_access_code)
     logging.info(all_passes_url)
     #print(all_passes_url)
 
-    response = urllib.request.urlopen(all_passes_url)
-    data = json.loads(response.read().decode("utf-8"))
+    other_response = requests.get(all_passes_url)
+    response = json.loads(other_response.content.decode("utf-8"))
+    data = response
+
+    logging.info(dir(response))
+    #data = json.loads(response.read().decode("utf-8"))
     logging.info(data[pass_id])
     post_string = str(data[pass_id]["MountainPassName"]) + "\n"
     post_string += "Road Condition: "
@@ -56,7 +60,7 @@ def one_from_all_passes(pass_id):
     post_string += str(data[pass_id]["RestrictionOne"]["TravelDirection"]) + ": "
     post_string += str(data[pass_id]["RestrictionOne"]["RestrictionText"]) + "\n"
     post_string += str(data[pass_id]["RestrictionTwo"]["TravelDirection"]) + ": "
-    post_string += str(data[pass_id]["RestrictionTwo"]["RestrictionText"]) + "\n"
+    post_string += str(data[pass_id]["RestrictionTwo"]["RestrictionText"])
     return post_string
 
 
@@ -73,31 +77,13 @@ def get_camera(camera_id):
 
     response = urllib.request.urlopen(camera_url)
     data = json.loads(response.read().decode("utf-8"))
-    #print(data)
-    #print(type(data))
-    print("78")
-    print(camera_id)
     camera_dict = {}
     for message in data:
-        #print("81")
-        #print(message)
-        #print(type(message))
-        #print("84")
-        #for item in message:
-            #print(item, message[item])
-        #print(message["CameraID"])
-        #print("88")
         if message["CameraID"] == camera_id:
-            #print("91")
-            #print(message["CameraID"])
-            #print(dir(message))
-            #print(type(message))
-            #print(message["ImageURL"])
             image_url = message["ImageURL"]
-        #camera_dict[message["CameraId"]] = message
 
-    print(image_url)
     logging.info(image_url)
+    return image_url
 
 
 def one_pass():
@@ -111,6 +97,42 @@ def one_pass():
     print(data)
     #logging.info(str(data))
     logging.info("ouch")
+
+
+def twitter_post(post_data, image_url=0):
+    logging.info("Twitter post attempt.")
+    if image_url:
+        auth = OAuth(
+                key.token,
+                key.token_secret,
+                key.consumer_key,
+                key.consumer_secret,
+                )
+
+        t_upload = Twitter(
+                domain="upload.twitter.com",
+                auth=auth)
+
+        logging.info(image_url)
+        response = requests.get(image_url)
+        imagedata = response.content
+
+        id_img1 = t_upload.media.upload(media=imagedata)["media_id_string"]
+        id_img2 = t_upload.media.upload(media=imagedata)["media_id_string"]
+
+    print(id_img1, id_img2)
+
+
+    auth = OAuth(
+            key.token,
+            key.token_secret,
+            key.consumer_key,
+            key.consumer_secret,
+            )
+    twitter = Twitter(auth=auth)
+    logging.info(str(post_data))
+    #twitter.statuses.update(status=str(post_data))
+    twitter.statuses.update(status=str(post_data), media_ids=",".join([id_img1, id_img2]))
 
 def post_test(post_data):
     logging.info("Twitter post attempt.")
@@ -129,15 +151,19 @@ def main():
     config()
     #print(key.wa_access_code)
     #all_passes()
-    get_camera(1138)
+    camera_image = get_camera(1138)
+    print(camera_image)
     pass_report = one_from_all_passes(0)
-    post_test(pass_report)
+    print(pass_report)
+    #twitter_post(pass_report)
+    twitter_post(pass_report, camera_image)
+    #twitter_post("Test post.")
     #one_pass()
 
 if __name__ == "__main__":
     try:
         main()
     except:
-        logging.warning(str(sys.exc_info()))
-        logging.warning(str(sys._getframe()))
+        logging.exception(str(sys.exc_info()))
+        logging.exception(str(sys._getframe()))
         sys.exit(2)
