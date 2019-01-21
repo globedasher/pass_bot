@@ -79,6 +79,7 @@ def get_camera(camera_id):
     data = json.loads(response.read().decode("utf-8"))
     camera_dict = {}
     for message in data:
+        print(message)
         if message["CameraID"] == camera_id:
             image_url = message["ImageURL"]
 
@@ -117,10 +118,14 @@ def twitter_post(post_data, image_url=0):
         response = requests.get(image_url)
         imagedata = response.content
 
-        id_img1 = t_upload.media.upload(media=imagedata)["media_id_string"]
-        id_img2 = t_upload.media.upload(media=imagedata)["media_id_string"]
+        image_url_1 = "https://images.wsdot.wa.gov/sc/090VC05347.jpg"
+        response1 = requests.get(image_url_1)
+        imagedata1 = response1.content
 
-    print(id_img1, id_img2)
+        #id_img1 = t_upload.media.upload(media=imagedata)["media_id_string"]
+        id_img2 = t_upload.media.upload(media=imagedata1)["media_id_string"]
+
+    #print(id_img1, id_img2)
 
 
     auth = OAuth(
@@ -132,7 +137,7 @@ def twitter_post(post_data, image_url=0):
     twitter = Twitter(auth=auth)
     logging.info(str(post_data))
     #twitter.statuses.update(status=str(post_data))
-    twitter.statuses.update(status=str(post_data), media_ids=",".join([id_img1, id_img2]))
+    twitter.statuses.update(status=str(post_data), media_ids=",".join([id_img2]))
 
 def post_test(post_data):
     logging.info("Twitter post attempt.")
@@ -149,16 +154,12 @@ def post_test(post_data):
 
 def main():
     config()
-    #print(key.wa_access_code)
     #all_passes()
-    camera_image = get_camera(1138)
+    camera_image = get_camera(9715)
     print(camera_image)
-    pass_report = one_from_all_passes(0)
+    pass_report = one_from_all_passes(11)
     print(pass_report)
-    #twitter_post(pass_report)
     twitter_post(pass_report, camera_image)
-    #twitter_post("Test post.")
-    #one_pass()
 
 if __name__ == "__main__":
     try:
