@@ -52,15 +52,23 @@ def one_from_all_passes(pass_id):
     logging.info(dir(response))
     #data = json.loads(response.read().decode("utf-8"))
     logging.info(data[pass_id])
-    post_string = str(data[pass_id]["MountainPassName"]) + "\n"
-    post_string += "Road Condition: "
+    post_string = ""
+    post_string += str(data[pass_id]["TemperatureInFahrenheit"]) + "°F\n"
     post_string += str(data[pass_id]["RoadCondition"]) + "\n"
-    post_string += "Current temperature: "
-    post_string += str(data[pass_id]["TemperatureInFahrenheit"]) + " Degrees Fahrenheit\n"
-    post_string += str(data[pass_id]["RestrictionOne"]["TravelDirection"]) + ": "
-    post_string += str(data[pass_id]["RestrictionOne"]["RestrictionText"]) + "\n"
-    post_string += str(data[pass_id]["RestrictionTwo"]["TravelDirection"]) + ": "
-    post_string += str(data[pass_id]["RestrictionTwo"]["RestrictionText"])
+
+
+    rest_one = str(data[pass_id]["RestrictionOne"]["RestrictionText"])
+    rest_two = str(data[pass_id]["RestrictionTwo"]["RestrictionText"])
+
+    # if the string doesn't have no restrictions, add it to the post
+    if "No restrictions" not in rest_one:
+        post_string += "E: "
+        post_string += rest_one + "\n"
+    if "No restrictions" not in rest_two:
+        post_string += "W: "
+        post_string += rest_two
+    if rest_one == rest_two:
+        post_string += rest_one + " either direction"
     return post_string
 
 
