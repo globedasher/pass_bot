@@ -50,7 +50,7 @@ def all_passes():
     logging.debug("ouch")
 
 def one_from_all_passes(pass_id):
-    #Get information all passes
+    #Get information all passes and return the pass_report string
     logging.info("One from all passes request")
     all_passes_url = "https://wsdot.com/Traffic/api/MountainPassConditions/MountainPassConditionsREST.svc/GetMountainPassConditionsAsJson?AccessCode={%s}" % (key.wa_access_code)
     logging.debug(all_passes_url)
@@ -64,22 +64,28 @@ def one_from_all_passes(pass_id):
     #data = json.loads(response.read().decode("utf-8"))
     logging.info(data[pass_id])
     post_string = ""
-    post_string += str(data[pass_id]["TemperatureInFahrenheit"]) + "°F\n"
-    post_string += str(data[pass_id]["RoadCondition"]) + "\n"
 
+    travel_advisory = str(data[pass_id]["TravelAdvisoryActive"])
 
-    rest_one = str(data[pass_id]["RestrictionOne"]["RestrictionText"])
-    rest_two = str(data[pass_id]["RestrictionTwo"]["RestrictionText"])
+    if not travel_advisory:
+        post_string += "No travel advisory at this time. Drive safe.\n"
+    else:
+        post_string += str(data[pass_id]["TemperatureInFahrenheit"]) + "°F\n"
+        post_string += str(data[pass_id]["RoadCondition"]) + "\n"
 
-    # if the string doesn't have no restrictions, add it to the post
-    if "No restrictions" not in rest_one:
-        post_string += "E: "
-        post_string += rest_one + "\n"
-    if "No restrictions" not in rest_two:
-        post_string += "W: "
-        post_string += rest_two
-    if rest_one == rest_two:
-        post_string += rest_one
+        rest_one = str(data[pass_id]["RestrictionOne"]["RestrictionText"])
+        rest_two = str(data[pass_id]["RestrictionTwo"]["RestrictionText"])
+
+        # if the string doesn't have no restrictions, add it to the post
+        if "No restrictions" not in rest_one:
+            post_string += "E: "
+            post_string += rest_one + "\n"
+        if "No restrictions" not in rest_two:
+            post_string += "W: "
+            post_string += rest_two
+        if rest_one == rest_two:
+            post_string += rest_one
+
     return post_string
 
 
