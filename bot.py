@@ -77,14 +77,15 @@ def one_from_all_passes(pass_id):
         rest_two = str(data[pass_id]["RestrictionTwo"]["RestrictionText"])
 
         # if the string doesn't have no restrictions, add it to the post
-        if "No restrictions" not in rest_one:
+
+        if rest_one == rest_two and "No restrictions" in rest_one:
+            post_string += rest_one
+
+        else:
             post_string += "E: "
             post_string += rest_one + "\n"
-        if "No restrictions" not in rest_two:
             post_string += "W: "
             post_string += rest_two
-        if rest_one == rest_two:
-            post_string += rest_one
 
     return post_string
 
